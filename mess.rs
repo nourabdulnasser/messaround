@@ -11,103 +11,42 @@
 */
 
 // --------- names.rs
-
-use rand::Rng;
+use super::api_call;
 use std::{thread};
-use super::input_wrapper;
 use terminal::{Clear, Action};
+//use regex //1.4.5
 
+pub fn memory_names(length: usize, time: usize){
+    let mut random_names: &str = "";
+    let mut names_vec: Vec<String> = vec![];  // vector of clean random names
+    
 
+    // function for getting a random name
+    fn random_name() -> String{
+        let mut api_name_vec: Vec<String> = vec![]; // vector of names extracted from api function
+        let api_name: String = api_call::api_get_request("https://random-data-api.com/api/name/random_name");
+        let api_delimit = regex::Regex::new(r",|:").unwrap(); // delimit characters for easier iteration
+        let api_delimit_vec: Vec<&str> = api_delimit.split(&api_name).collect(); // vector of all elements in api
+        let mut name = "";
+        let mut counter = 0;
 
-pub fn memory_cards(length: usize, time: usize){
-
-
-    let terminal = terminal::stdout();
-    let ranks = vec!["A","K","Q","J","2","3","4","5","6","7","8","9","10"];
-    let suits = vec!["c","d","h","s"];
-    //let suits = vec!["♣","♦","♥","♠"];
-
-    // random suits and ranks
-
-    let random_card = || {
-
-        let mut rng = rand::thread_rng();
-
-        let rand_index_rank = rng.gen_range(0..ranks.len());
-        let rand_index_suit = rng.gen_range(0..suits.len());
-
-        let rank = ranks[rand_index_rank];
-        let suit = suits[rand_index_suit];
-
-
-        // creates a random card with a rank and suit
-
-        return rank.to_owned()+suit;
-
-    };
-
-    // generating cards
-
-    let mut cards_line: String = "".to_string();
-
-    for  card in 0..length{
-        // random_card();
-        // let random_card_str = &random_card(); // to push random strings into vector
-        cards_line = cards_line + &random_card();
-        // cards_vec.push(random_card_str);
-        if card < length-1 {
-            cards_line = cards_line + ",  ";
-        }
-
-        // "looks,  like,  this"
-
+        // trying to convert elements of api_delimit_vec into String
+        for element in &api_delimit_vec{
+            if element == &"\"first_name\""
+            {
+                name = &api_delimit_vec[counter+1];  // using let to bind
+            }
+            counter = counter +1 ;
+        } 
+        // println!("{:?}",api_name_vec); // test
+        return name.to_string().replace("\"","");
     }
 
+    let mut random_names_vec: Vec<String> = vec![];
 
-
-
-    // wait for {time} seconds
-
-    let mem_time_u64 = (length*time).try_into().unwrap();
-    let mem_dur = std::time::Duration::from_secs(mem_time_u64);
-
-    println!("Memorise this:\n{:?}\nYou have {} seconds.", cards_line, length*time);
-
-    thread::sleep(mem_dur);
-
-    terminal.act(Action::ClearTerminal(Clear::All)).map_err(|err| println!("{:?}", err)).ok();
-
-
-
-    // user prompt
-
-    print!("Type in what you memorised!\nTo exit, enter: exit\n");
-
-
-
-    // comparing input and cards_line_vec
-
-    let cards_line_split = cards_line.split(",  ");
-    let cards_line_vec: Vec<&str> = cards_line_split.collect();
-
-    // println!("{:?}", cards_line_vec); // test
-
-    let mut counter = 0;
-
-    for _item in &cards_line_vec {
-        let user_input = input_wrapper::get_input();
-        if user_input.to_uppercase() == cards_line_vec[counter].to_uppercase(){
-            println!("Bravo! You got {} right!\n", cards_line_vec[counter]);
-        } else if user_input == "exit" {
-           break;
-        } else {
-            println!("Nay :( The right answer is {}.\n", cards_line_vec[counter]);
-        };
-
-        counter = counter +1;
-
+    // loop to get {number_of_names} random names
+    for number in 0..length
+    {
+        random_names_vec.push(random_name());
+        println!("{:?}", random_names_vec); // test
     }
-
-    println!("end");
-
-}
